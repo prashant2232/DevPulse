@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: devpulse-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - devpulse-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: devpulse-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+    networks:
+      - devpulse-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: devpulse-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - devpulse-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: devpulse-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - devpulse-network
+
+  backend:
+    build: ./backend
+    container_name: devpulse-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+      - timescaledb
+      - redis
+    volumes:
+      - ./backend:/app
+    networks:
+      - devpulse-network
+
+  frontend:
+    build: ./frontend
+    container_name: devpulse-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src
+    networks:
+      - devpulse-network
+
+networks:
+  devpulse-network:
+    driver: bridge
+
+volumes:
+  timescale_data:
