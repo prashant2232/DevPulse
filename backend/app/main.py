@@ -14,6 +14,7 @@ from app.kafka.consumers import start_all_consumers
 from app.routers import webhooks, metrics, alerts, digest
 from ml.ml_consumer import run_ml_consumer
 from scheduler.digest_job import generate_weekly_digest, trigger_digest_now
+from app.config import settings
 
 logging.basicConfig(level=logging.INFO)
 scheduler = AsyncIOScheduler()
@@ -21,27 +22,26 @@ scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── Startup ───────────────────────────────────────────────────────────────
     await init_db()
     await init_redis()
-    await start_all_consumers()
 
-    # Start ML consumer as a background task
-    asyncio.create_task(run_ml_consumer())
+    # Only start Kafka consumers if broker is configured
+    if settings.kafka_bootstrap and settings.kafka_bootstrap != "kafka:9092":
+        await start_all_consumers()
+        asyncio.create_task(run_ml_consumer())
+    else:
+        print("⚠️  Kafka not configured — skipping consumers (production mode)")
 
-    # Schedule weekly digest every Monday at 9am
     scheduler.add_job(
         generate_weekly_digest,
         CronTrigger(day_of_week="mon", hour=9, minute=0),
         id="weekly_digest",
-        name="Weekly Gemini digest",
         replace_existing=True,
     )
     scheduler.start()
 
     yield
 
-    # ── Shutdown ──────────────────────────────────────────────────────────────
     scheduler.shutdown(wait=False)
     await stop_producer()
     await close_redis()
