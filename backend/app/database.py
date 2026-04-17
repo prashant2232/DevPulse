@@ -41,7 +41,10 @@ SELECT create_hypertable('commit_events', 'time', if_not_exists => TRUE);
 async def init_db():
     async with _get_engine().begin() as conn:
         await conn.execute(text(CREATE_TABLE_SQL))
-        await conn.execute(text(CREATE_HYPERTABLE_SQL))
+        try:
+            await conn.execute(text(CREATE_HYPERTABLE_SQL))
+        except Exception as e:
+            print("Hypertable skipped:", e)
     print("✅ TimescaleDB initialized")
 
 
