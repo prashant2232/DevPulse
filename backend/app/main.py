@@ -65,7 +65,7 @@ app.include_router(digest.router)
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "scheduler": scheduler.running}
+    return {"status": "ok"}
 
 
 @app.post("/api/digest/trigger")
