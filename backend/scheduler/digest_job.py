@@ -88,7 +88,7 @@ Return ONLY a valid JSON object with exactly these three keys (no markdown, no e
     try:
         client = Groq(api_key=settings.groq_api_key)
         response = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
             max_tokens=512,
