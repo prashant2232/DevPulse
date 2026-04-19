@@ -94,7 +94,7 @@ Return ONLY a valid JSON object with exactly these three keys (no markdown, no e
     # ── 3. Call Gemini Pro ────────────────────────────────────────────────────
     try:
         genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
         logger.info(f"Gemini raw response: {raw_text[:200]}")
