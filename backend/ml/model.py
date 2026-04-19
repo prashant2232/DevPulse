@@ -3,48 +3,35 @@ import numpy as np
 import os
 from dataclasses import dataclass
 
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pkl")
+
 @dataclass
 class ScoreResult:
     is_anomaly: bool
-    score: float        # raw IsolationForest decision score (negative = more anomalous)
+    score: float
     commits_today: int
 
-_model = None  # module-level singleton — loaded once
+_model = None
 
 def _load_model():
     global _model
     if _model is not None:
         return _model
-
-    model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
-
-    if not os.path.exists(model_path):
+    if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(
-            f"model.pkl not found at {model_path}. "
-            "Run: docker compose exec backend python ml/train.py"
+            f"model.pkl not found at {MODEL_PATH}. "
+            "Run: python ml/train.py"
         )
-
-    with open(model_path, "rb") as f:
+    with open(MODEL_PATH, "rb") as f:
         _model = pickle.load(f)
-
-    print("✅ IsolationForest model loaded")
+    print(f"✅ Model loaded from {MODEL_PATH}")
     return _model
 
-
 def score(developer: str, commits_today: int) -> ScoreResult:
-    """
-    Score a developer's commit count for the day.
-    Returns is_anomaly=True if the activity looks suspicious.
-    """
     model = _load_model()
     X = np.array([[commits_today]])
-
-    # predict returns 1 (normal) or -1 (anomaly)
     prediction = model.predict(X)[0]
-
-    # decision_function returns a score: more negative = more anomalous
-    raw_score = float(model.decision_function(X)[0])
-
+    raw_score  = float(model.decision_function(X)[0])
     return ScoreResult(
         is_anomaly=(prediction == -1),
         score=round(raw_score, 4),
