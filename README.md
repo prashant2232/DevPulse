@@ -38,6 +38,10 @@ GitHub → FastAPI → Kafka → [DB consumer → TimescaleDB]
 APScheduler → Gemini Pro → Redis digest
 React → FastAPI → TimescaleDB + Redis
 
+## Live Demo
+Backend Deploy(Railway): https://devpulse-production-1da0.up.railway.app/
+Frontend Deploy(Vercel): https://dev-pulse-two.vercel.app/
+
 ## Quick start
 
 ### Prerequisites
