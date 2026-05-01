@@ -11,10 +11,13 @@ from app.database import init_db
 from app.redis_client import init_redis, close_redis
 from app.kafka.producer import stop_producer
 from app.kafka.consumers import start_all_consumers
-from app.routers import webhooks, metrics, alerts, digest
+from app.routers import webhooks, metrics, alerts, digest, reset
 from ml.ml_consumer import run_ml_consumer
 from scheduler.digest_job import generate_weekly_digest, trigger_digest_now
 from app.config import settings
+
+
+app.include_router(reset.router)
 
 logging.basicConfig(level=logging.INFO)
 scheduler = AsyncIOScheduler()
