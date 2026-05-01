@@ -16,9 +16,6 @@ from ml.ml_consumer import run_ml_consumer
 from scheduler.digest_job import generate_weekly_digest, trigger_digest_now
 from app.config import settings
 
-
-app.include_router(reset.router)
-
 logging.basicConfig(level=logging.INFO)
 scheduler = AsyncIOScheduler()
 
@@ -64,6 +61,7 @@ app.include_router(webhooks.router)
 app.include_router(metrics.router)
 app.include_router(alerts.router)
 app.include_router(digest.router)
+app.include_router(reset.router)
 
 
 @app.get("/api/health")
